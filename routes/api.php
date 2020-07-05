@@ -23,7 +23,7 @@ Route::group(['middleware' => ['cors']], function () {
     Route::post('/register', 'Api\AuthController@register');
     Route::post('/login', 'Api\AuthController@login');
     Route::post('/logout', 'Api\AuthController@logout')->middleware('auth:api');
-    Route::get('/mail', 'Api\AuthController@tryEmail');
+    // Route::get('/mail', 'Api\AuthController@tryEmail');
   });
 
   Route::apiResource('/new', 'Api\NewsController')->middleware('auth:api');

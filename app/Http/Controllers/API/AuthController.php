@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\User;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\MailService;
+use Illuminate\Support\Str;
 
 
 class AuthController extends Controller
@@ -17,22 +19,27 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
         ]);
+        // 'password' => 'required|string|min:6|confirmed',
         if ($validator->fails()) {
             return response(['errors' => $validator->errors()->all()], 400);
         }
         // $request['password'] = Hash::make($request['password']);
-        $request['password'] = bcrypt($request->password);
-
+        // $hashed_random_password = Hash::make(str_random(8));
+        $hashed_random_password = Str::random(8);
+        $request['password'] = bcrypt($hashed_random_password);
+        $request['password_confirmation'] = $request['password'];
+        
 
         $user = User::create($request->toArray());
 
-        $accessToken = $user->createToken('authToken')->accessToken;
+        $this->SendMail($request['name'],$request['email'],$hashed_random_password);
 
-        $response = ['user' => $user, 'access_token' => $accessToken];
+        // $accessToken = $user->createToken('authToken')->accessToken;
 
-        return response()->json($response, 200);
+        // $response = ['user' => $user, 'access_token' => $accessToken];
+
+        return response()->json(["msg"=> "Check your email to sign in"], 200);
     }
 
     public function login(Request $request)
@@ -59,22 +66,17 @@ class AuthController extends Controller
         return response()->json($response, 200);
     }
 
-    public function tryEmail()
+    private function SendMail($name, $email, $password)
     {
-        //     $to_name = 'Abdulla';
-        //     $to_email = 'abdovitch896@gmail.com';
-        //     $data = array('name'=>'Ogbonna Vitalis(sender_name)', 'body' => 'A test mail');
-        //     Mail::send('emails.mail', $data, function($message) use ($to_name, $to_email) {
-        //         $message->to($to_email, $to_name)
-        //         ->subject('Laravel Test Mail');
-        //         $message->from('yodawy.new.task@gmail.com','Test Mail');
-        //     });
-        $data = array('name' => "Virat Gandhi");
+        $details = [
+            'title' => 'Sign up on News app',
+            'body' => 'body',
+            'name' => $name,
+            'email' => $email,
+            'password' => $password,
+        ];
+        \Mail::to($email)->send(new MailService($details));
 
-        Mail::send(['text' => 'emails.mail'], $data, function ($message) {
-            $message->to('abdovitch896@gmail.com', 'Tutorials Point')->subject('Laravel Basic Testing Mail');
-            $message->from('yodawy.new.task@gmail.com', 'Virat Gandhi');
-        });
         return response(['send' => 'sended']);
     }
 }
