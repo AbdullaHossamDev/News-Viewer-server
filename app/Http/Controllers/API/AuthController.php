@@ -16,28 +16,27 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
+        $uniqueEmail = Validator::make($request->all(), [
+            'email' => 'unique:users',
+        ]);
+        if ($uniqueEmail->fails()) {
+            return response(['errors' => $uniqueEmail->errors()->all()], 409);
+        }
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
         ]);
-        // 'password' => 'required|string|min:6|confirmed',
-        if ($validator->fails()) {
+        $ValidEmail = filter_var( $request['email'], FILTER_VALIDATE_EMAIL );
+        if ($validator->fails() || !$ValidEmail) {
             return response(['errors' => $validator->errors()->all()], 400);
         }
-        // $request['password'] = Hash::make($request['password']);
-        // $hashed_random_password = Hash::make(str_random(8));
+        
         $hashed_random_password = Str::random(8);
         $request['password'] = bcrypt($hashed_random_password);
         $request['password_confirmation'] = $request['password'];
         
-
         $user = User::create($request->toArray());
-
         $this->SendMail($request['name'],$request['email'],$hashed_random_password);
-
-        // $accessToken = $user->createToken('authToken')->accessToken;
-
-        // $response = ['user' => $user, 'access_token' => $accessToken];
 
         return response()->json(["msg"=> "Check your email to sign in"], 200);
     }
