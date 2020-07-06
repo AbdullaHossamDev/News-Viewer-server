@@ -20,13 +20,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['middleware' => ['cors']], function () {
   Route::prefix('/user')->group(function () {
-    Route::post('/register', 'Api\AuthController@register');
-    Route::post('/login', 'Api\AuthController@login');
-    Route::post('/logout', 'Api\AuthController@logout')->middleware('auth:api');
+    Route::post('/register', 'API\AuthController@register');
+    Route::post('/login', 'API\AuthController@login');
+    Route::post('/logout', 'API\AuthController@logout')->middleware('auth:api');
     // Route::get('/mail', 'Api\AuthController@tryEmail');
   });
 
-  Route::apiResource('/new', 'Api\NewsController')->middleware('auth:api');
+  Route::apiResource('/new', 'API\NewsController')->middleware('auth:api');
 
-  Route::get('/newsAPI', 'Api\NewsAPIController@getNews');
+  Route::get('/newsAPI', 'API\NewsAPIController@getNews');
 });
