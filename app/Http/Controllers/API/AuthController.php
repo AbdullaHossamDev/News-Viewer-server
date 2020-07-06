@@ -25,6 +25,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
+            'birthDate' => 'required'
         ]);
         $ValidEmail = filter_var( $request['email'], FILTER_VALIDATE_EMAIL );
         if ($validator->fails() || !$ValidEmail) {
@@ -34,7 +35,8 @@ class AuthController extends Controller
         $hashed_random_password = Str::random(8);
         $request['password'] = bcrypt($hashed_random_password);
         $request['password_confirmation'] = $request['password'];
-        
+        $request['birthDate'] = date_create($request->birthDate)->format('Y-m-d H:i:s');
+
         $user = User::create($request->toArray());
         $this->SendMail($request['name'],$request['email'],$hashed_random_password);
 
@@ -49,7 +51,7 @@ class AuthController extends Controller
         ]);
 
         if (!auth()->attempt($loginData)) {
-            return response(['message' => 'Invalid Credentials']);
+            return response(['message' => 'Invalid Credentials'],401);
         }
 
         $accessToken = auth()->user()->createToken('authToken')->accessToken;
