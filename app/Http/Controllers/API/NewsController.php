@@ -39,7 +39,7 @@ class NewsController extends Controller
             'urlToImage' => 'required',
             'publishedAt' => 'required',
         ]);
-        if($validator->fails()){
+        if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()->all()], 400);
         }
         $request['source'] = json_encode($request->source);
@@ -82,8 +82,8 @@ class NewsController extends Controller
     {
         $userId = $request->user()->id;
         $result = News::where('id', $id)->where('userId', $userId)->delete();
-        if($result == 0){
-            return response()->json('No news deleted',400);
+        if ($result == 0) {
+            return response()->json('No news deleted', 400);
         }
         return response()->json(['result' => $result]);
     }
