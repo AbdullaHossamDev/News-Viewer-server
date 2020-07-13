@@ -40,16 +40,24 @@ class AuthController extends Controller
         $user = User::create($request->toArray());
         $this->SendMail($request['name'], $request['email'], $hashed_random_password);
 
-        return response()->json(["msg" => "Check your email to sign in"], 200);
+        // return response()->json(["msg" => "Check your email to sign in"], 200);
+        //for test
+        return response()->json(["msg" => "Check your email to sign in", 'password' => $hashed_random_password], 200);
+        
     }
 
     public function login(Request $request)
     {
-        $loginData = $request->validate([
-            'email' => 'email|required',
-            'password' => 'required'
-        ]);
-
+        try {
+            $loginData = $request->validate([
+                'email' => 'email|required',
+                'password' => 'required'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response(['message' => 'Invalid Credentials'], 401);
+        }
+        
         if (!auth()->attempt($loginData)) {
             return response(['message' => 'Invalid Credentials'], 401);
         }
