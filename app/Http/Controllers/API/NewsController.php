@@ -79,7 +79,7 @@ class NewsController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function destroy(Request $request, $id)
-    {
+    {   // soft delete || "isActive" attribute 
         $userId = $request->user()->id;
         $result = News::where('id', $id)->where('userId', $userId)->delete();
         if ($result == 0) {
