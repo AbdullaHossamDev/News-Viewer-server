@@ -53,59 +53,54 @@ export default {
     ...mapActions(["getMyFav", "popupDisplay"]),
     filterNew(filterData) {
       this.filterData = filterData;
-    }
+    },
+    arrayPush(filterString, s) {
+			if(filterString.length == 0){
+				filterString.push('egy'+s);
+				filterString.push('uae'+s);
+			}else{
+				if(filterString[0].length > 3){
+					let filterStrLen = filterString.length;
+					for (let i = 0; i < filterStrLen; i++) {
+						if(filterString[i].includes("egy") ){
+							filterString.push(`egy${s}`);
+						}else{
+							filterString.push(`uae${s}`);
+						}
+					}
+				}else{
+					for (let i = 0; i < filterString.length; i++) {
+						if(filterString[i] == "egy" || filterString[i] == "uae" ){
+							filterString[i] += s;
+						}
+					}
+				}
+			}
+		}
   },
   computed: {
     ...mapState(["news"]),
     favNews() {
       let filterString = [];
-      if (this.filterData.EG) {
-        if (
-          (this.filterData.Business && this.filterData.Sports) ||
-          (!this.filterData.Business && !this.filterData.Sports)
-        ) {
-          filterString.push("egyBusiness");
-          filterString.push("egySports");
-        } else if (this.filterData.Business) {
-          filterString.push("egyBusiness");
-        } else {
-          filterString.push("egySports");
-        }
-      }
+		
+			if (this.filterData.EG) {
+				filterString.push("egy");
+			}
 
-      if (this.filterData.UAE) {
-        if (
-          (this.filterData.Business && this.filterData.Sports) ||
-          (!this.filterData.Business && !this.filterData.Sports)
-        ) {
-          filterString.push("uaeBusiness");
-          filterString.push("uaeSports");
-        } else if (this.filterData.Business) {
-          filterString.push("uaeBusiness");
-        } else {
-          filterString.push("uaeSports");
-        }
-      }
+			if (this.filterData.UAE) {
+				filterString.push("uae");
+			}
 
-      if (!this.filterData.EG && !this.filterData.UAE) {
-        if (this.filterData.Business) {
-          filterString.push("egyBusiness");
-          filterString.push("uaeBusiness");
-        }
-        if (this.filterData.Sports) {
-          filterString.push("egySports");
-          filterString.push("uaeSports");
-        }
-      }
+			if (this.filterData.Business) {
+				this.arrayPush(filterString, "Business");
+			}
 
-      if (filterString.length == 0) {
-        filterString.push("egyBusiness");
-        filterString.push("egySports");
-        filterString.push("uaeBusiness");
-        filterString.push("uaeSports");
-      }
-
-      return this.news.favNews.filter(n => filterString.includes(n.type));
+			if (this.filterData.Sports) {
+				this.arrayPush(filterString, "Sports");
+			}
+			return this.news.news.filter(n => {
+				return filterString.length == 0 ? 1 : filterString.some(x => n.type.includes(x));
+			});
     }
   },
   watch: {
