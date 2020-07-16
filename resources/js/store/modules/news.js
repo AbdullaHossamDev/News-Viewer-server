@@ -61,7 +61,7 @@ const actions = {
                     } else {
                         commit("showPopup", {
                             msgType: "Error",
-                            msgText: error.response.data.msg
+                            msgText: "Internal Server Error"
                         });
                     }
                 } else {
@@ -97,8 +97,7 @@ const actions = {
                     } else {
                         commit("showPopup", {
                             msgType: "Error",
-                            msgText:
-                                "Some error has happend, please try again later!"
+                            msgText: "Some error has happend, please try again later!"
                         });
                     }
                 } else {
