@@ -98,7 +98,7 @@ export default {
 			if (this.filterData.Sports) {
 				this.arrayPush(filterString, "Sports");
 			}
-			return this.news.news.filter(n => {
+			return this.news.favNews.filter(n => {
 				return filterString.length == 0 ? 1 : filterString.some(x => n.type.includes(x));
 			});
     }
