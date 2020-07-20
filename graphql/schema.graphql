@@ -29,7 +29,7 @@ type Mutation {
     
     saveFav( input: SaveNewInput ): News @guard(with: ["api"]) @field( resolver: "App\\GraphQL\\Mutations\\FavNews@save")
 
-    deleteFav (id: ID!): News @delete
+    deleteFav (id: ID!): News @guard(with: ["api"]) @delete
 }
 
 
