@@ -1,0 +1,101 @@
+"A date string with format `Y-m-d`, e.g. `2011-05-23`."
+scalar Date @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date")
+
+"A datetime string with format `Y-m-d H:i:s`, e.g. `2018-05-23 13:43:32`."
+scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+
+"A datetime and timezone string in ISO 8601 format `Y-m-dTH:i:sO`, e.g. `2020-04-20T13:53:12+02:00`."
+scalar DateTimeTz @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTimeTz")
+
+type Query {
+    users: [User!]! @paginate(defaultCount: 10)
+    user(id: ID @eq): User @find
+
+    newsAPI: [[NewsAPIData]]
+    new(id: ID! @eq): News @find
+
+
+}
+
+type Mutation {
+    
+    register(name: String!, email:String!, birthDate: String!): Response! @field( resolver: "App\\GraphQL\\Mutations\\User_authenticate@register")
+    
+    login(email:String!, password: String!): Login! @field( resolver: "App\\GraphQL\\Mutations\\User_authenticate@login")
+
+    logout: Response! @guard(with: ["api"]) @field( resolver: "App\\GraphQL\\Mutations\\User_authenticate@logout")
+
+    getFav: [News] @guard(with: ["api"]) @field( resolver: "App\\GraphQL\\Mutations\\FavNews@getFav")
+    
+    saveFav( input: SaveNewInput ): News @guard(with: ["api"]) @field( resolver: "App\\GraphQL\\Mutations\\FavNews@save")
+
+    deleteFav (id: ID!): News @delete
+}
+
+
+type User {
+    id: ID
+    name: String
+    email: String
+    created_at: DateTime
+    updated_at: DateTime
+    news: [News] @hasMany(relation: "news")
+}
+
+type News{
+    id: ID
+    userId: ID
+    user: User @belongsTo(relation: "user")
+    source: String
+    author: String
+    type: String
+    title: String
+    description: String
+    url: String
+    urlToImage: String
+    publishedAt: String
+    errors: [String]
+}
+
+type NewsAPIData{
+    source: Source
+    author: String
+    type: String
+    title: String
+    description: String
+    url: String
+    urlToImage: String
+    publishedAt: String
+}
+
+type Source{
+    id: String
+    name: String
+}
+
+type Response{
+    msg: String
+    errors: [String]
+}
+
+type Login{
+    name: String
+    token: String
+    errors: [String]
+}
+
+input SaveNewInput {
+    source : SourceInput!
+    author : String!
+    title : String!
+    description : String!
+    url : String!
+    urlToImage : String!
+    publishedAt : String!
+		type: String!
+}
+
+input SourceInput{
+	id: String
+	name: String
+}

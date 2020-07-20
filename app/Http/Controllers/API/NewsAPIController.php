@@ -21,6 +21,6 @@ class NewsAPIController extends Controller
             $aeBusiness->json()['articles'],
             $aeSports->json()['articles']
         ];
-        return response()->json($res);
+        return $res;
     }
 }

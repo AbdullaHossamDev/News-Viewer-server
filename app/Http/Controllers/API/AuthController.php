@@ -14,58 +14,59 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+
+    public function register($request)
     {
-        $uniqueEmail = Validator::make($request->all(), [
-            'email' => 'unique:users',
-        ]);
-        if ($uniqueEmail->fails()) {
-            return response(['errors' => $uniqueEmail->errors()->all()], 409);
-        }
-        $validator = Validator::make($request->all(), [
+        $validator = Validator::make($request, [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'birthDate' => 'required'
         ]);
         $ValidEmail = filter_var($request['email'], FILTER_VALIDATE_EMAIL);
         if ($validator->fails() || !$ValidEmail) {
-            return response(['errors' => $validator->errors()->all()], 400);
+            return ['errors' => $validator->errors()->all()];
         }
 
         $hashed_random_password = Str::random(8);
         $request['password'] = bcrypt($hashed_random_password);
         $request['password_confirmation'] = $request['password'];
-        $request['birthDate'] = date_create($request->birthDate)->format('Y-m-d H:i:s');
+        $request['birthDate'] = date_create($request['birthDate'])->format('Y-m-d H:i:s');
 
-        $user = User::create($request->toArray());
+        $user = User::create($request);
         $this->SendMail($request['name'], $request['email'], $hashed_random_password);
 
-        return response()->json(["msg" => "Check your email to sign in"], 200);
+        return ["msg" => "Check your email to sign in"];
     }
 
-    public function login(Request $request)
+
+    public function login($request)
     {
-        $loginData = $request->validate([
+        $validator = Validator::make($request, [
             'email' => 'email|required',
             'password' => 'required'
         ]);
+        $ValidEmail = filter_var($request['email'], FILTER_VALIDATE_EMAIL);
+        if ($validator->fails() || !$ValidEmail) {
+            return ['errors' => $validator->errors()->all()];
+        }
 
-        if (!auth()->attempt($loginData)) {
-            return response(['message' => 'Invalid Credentials'], 401);
+        if (!auth()->attempt($request)) {
+            return ['errors' => ['Invalid Credentials']];
         }
 
         $accessToken = auth()->user()->createToken('authToken')->accessToken;
 
-        return response(['name' => auth()->user()->name, 'token' => $accessToken]);
+        return ['name' => auth()->user()->name, 'token' => $accessToken];
     }
+
 
     public function logout(Request $request)
     {
         $token = $request->user()->token();
         $token->revoke();
-        $response = ['message' => 'You have been successfully logged out!'];
-        return response()->json($response, 200);
+        return ['msg' => 'You have been successfully logged out!'];;
     }
+
 
     private function SendMail($name, $email, $password)
     {

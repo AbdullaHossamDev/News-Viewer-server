@@ -18,7 +18,7 @@ class NewsController extends Controller
     {
         $userId = $request->user()->id;
         $NewsData = News::where('userId', $userId)->get();
-        return response()->json($NewsData, 200);
+        return $NewsData;
     }
 
     /**
@@ -27,10 +27,10 @@ class NewsController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request, $args)
     {
         //
-        $validator = Validator::make($request->all(), [
+        $validator = Validator::make($args, [
             'source' => 'required',
             'author' => 'required',
             'title' => 'required',
@@ -40,13 +40,14 @@ class NewsController extends Controller
             'publishedAt' => 'required',
         ]);
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()->all()], 400);
+            return ['errors' => $validator->errors()->all()];
         }
-        $request['source'] = json_encode($request->source);
-        $request['userId'] = $request->user()->id;
-        $request['publishedAt'] = date_create($request->publishedAt)->format('Y-m-d H:i:s');
-        $newData = News::create($request->toArray());
-        return response($newData, 200);
+        $args['source'] = json_encode($args['source']);
+        $args['userId'] = $request->user()->id;
+        $args['publishedAt'] = date_create($args["publishedAt"])->format('Y-m-d H:i:s');
+        $newData = News::create($args);
+        
+        return $newData;
     }
 
     /**
