@@ -28,7 +28,6 @@ class FavNews
                 "urlToImage"  => $args["input"]["urlToImage"],
                 "publishedAt" => $args["input"]["publishedAt"],
             ]
-    );  
-     
+    );     
     }
 }

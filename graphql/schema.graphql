@@ -76,12 +76,14 @@ type Source{
 type Response{
     msg: String
     errors: [String]
+    status: String
 }
 
 type Login{
     name: String
     token: String
     errors: [String]
+    status: String
 }
 
 input SaveNewInput {

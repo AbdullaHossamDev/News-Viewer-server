@@ -23,8 +23,11 @@ class AuthController extends Controller
             'birthDate' => 'required'
         ]);
         $ValidEmail = filter_var($request['email'], FILTER_VALIDATE_EMAIL);
-        if ($validator->fails() || !$ValidEmail) {
-            return ['errors' => $validator->errors()->all()];
+        if(!$ValidEmail){
+            return ['errors' => ["This mail is not valid!"], "status" => "400"];
+        }
+        if ($validator->fails()) {
+            return ['errors' => $validator->errors()->all(), "status" => "400"];
         }
 
         $hashed_random_password = Str::random(8);
@@ -35,7 +38,7 @@ class AuthController extends Controller
         $user = User::create($request);
         $this->SendMail($request['name'], $request['email'], $hashed_random_password);
 
-        return ["msg" => "Check your email to sign in"];
+        return ["msg" => "Check your email to sign in", "status" => "200"];
     }
 
 
@@ -46,17 +49,20 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
         $ValidEmail = filter_var($request['email'], FILTER_VALIDATE_EMAIL);
-        if ($validator->fails() || !$ValidEmail) {
-            return ['errors' => $validator->errors()->all()];
+        if(!$ValidEmail){
+            return ['errors' => ["This mail is not valid!"], "status" => "400"];
+        }
+        if ($validator->fails()) {
+            return ['errors' => $validator->errors()->all(), "status" => "400"];
         }
 
         if (!auth()->attempt($request)) {
-            return ['errors' => ['Invalid Credentials']];
+            return ['errors' => ['Invalid Credentials'], "status" => "401"];
         }
 
         $accessToken = auth()->user()->createToken('authToken')->accessToken;
 
-        return ['name' => auth()->user()->name, 'token' => $accessToken];
+        return ['name' => auth()->user()->name, 'token' => $accessToken, "status" =>"200"];
     }
 
 

@@ -90,7 +90,7 @@ export default {
       type: Object,
       required: true
     },
-    newDataId: { type: Number },
+    newDataId: { type: String },
     index: {
       type: Number,
       required: true

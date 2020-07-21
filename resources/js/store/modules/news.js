@@ -1,6 +1,9 @@
 // import Axios from "axios";
 
 import Axios from "axios";
+import gql from 'graphql-tag';
+
+import graphqlClient from '../../utils/graphql';
 
 const filter = function(newsData) {
     newsData = newsData.filter(nw => {
@@ -31,40 +34,67 @@ const getters = {};
 
 const actions = {
     async getAllNews({ commit }) {
-        Axios.get("/api/newsAPI")
-            .then(response => commit("getAllNews", response.data))
-            .catch(function(error) {
-                if (error.response) {
-                    commit("showPopup", {
-                        msgType: "Error",
-                        msgText: error.response.data.msg
-                    });
-                } else {
-                    commit("showPopup", {
-                        msgType: "Error",
-                        msgText: "Please check your network 1"
-                    });
-                }
+        graphqlClient.query({
+            query: gql`
+              query {
+                newsAPI{
+                    source{id name}
+                    author
+                    title
+                    description
+                    url
+                    urlToImage
+                    publishedAt
+                  }
+              }
+            `,
+          }).then(response => {
+              console.log('getAllNews response: ', response.data.newsAPI)
+              commit("getAllNews", response.data.newsAPI)
+          }).catch(function(error){
+              console.log('errrrrrr',error.message)
+            commit("showPopup", {
+                msgType: "Error",
+                msgText: "Please check your network 1"
             });
+          })
     },
 
     getMyFav({ commit }) {
-        Axios.get("/api/new/")
-            .then(response => commit("getMyFav", response.data))
-            .catch(function(error) {
-                if (error.response) {
-                    if (error.response.status == 401) {
-                        commit("showPopup", {
-                            msgType: "Error",
-                            msgText: "You not allowed to get this page"
-                        });
-                    } else {
-                        commit("showPopup", {
-                            msgType: "Error",
-                            msgText: "Internal Server Error"
-                        });
-                    }
-                } else {
+        graphqlClient.mutate({
+            mutation: gql`
+            mutation {
+                getFav{
+                    id
+                    userId
+                    source
+                    author
+                    type
+                    title
+                    description
+                    url
+                    urlToImage
+                    publishedAt
+                    errors
+                }
+            }
+            `
+          }).then(response => {
+              console.log('getMyFav response: ', response)
+              commit("getMyFav", response.data.getFav)
+          }).catch(function(error){
+                console.log('getMyFav error : ',error)
+                if (error.message.startsWith("GraphQL Error: Database")) {
+                    commit("showPopup", {
+                        msgType: "Error",
+                        msgText: "Internal server error, please try again"
+                    });
+                }else if(error.message.startsWith("GraphQL error: Unauthenticated.")){
+                    commit("showPopup", {
+                        msgType: "Error",
+                        msgText: "You not allowed to get this page"
+                    });
+                }else{
                     commit("showPopup", {
                         msgType: "Error",
                         msgText: "Please check your network 2"
@@ -74,33 +104,64 @@ const actions = {
     },
 
     addToFav({ commit }, newData) {
-        Axios.post("/api/new/", newData)
-            .then(response => {
-                commit("addToFav", { savedData: response.data, newData });
+        console.log('newData: ',newData)
+        graphqlClient.mutate({
+            mutation: gql`
+            mutation ($sourceName: String, $sourceId: String, $author: String!,$type: String!,$title: String!,$description: String!,$url: String!,$urlToImage: String!,$publishedAt: String! ) { 
+                saveFav(
+                    input:{
+                        source: {
+                            id: $sourceId
+                            name: $sourceName
+                        }
+                        author: $author
+                       type: $type
+                       title: $title
+                       description: $description
+                       url: $url
+                       urlToImage: $urlToImage
+                       publishedAt: $publishedAt
+                    }
+              ){
+                id
+                userId
+                source
+                author
+                type
+                title
+                description
+                url
+                urlToImage
+                publishedAt
+                errors
+            }
+              
+            }
+            `,
+
+        
+        variables: { sourceName: newData.source.name, sourceId: newData.source.id, author: newData.author, type: newData.type, title: newData.title, description: newData.description, url: newData.url, urlToImage: newData.urlToImage, publishedAt: newData.publishedAt}
+        
+          }).then(response => {
+                console.log('addToFav response: ', response)
+                commit("addToFav", { savedData: response.data.saveFav, newData });
                 commit("showSnackBar", {
                     text: "New is added successfully to your favorite list",
                     timeout: 3000
                 });
-            })
-            .catch(function(error) {
-                if (error.response) {
-                    if (error.response.status == 401) {
-                        commit("showPopup", {
-                            msgType: "Error",
-                            msgText: "You should sign in first!"
-                        });
-                    } else if (error.response.status == 400) {
-                        commit("showPopup", {
-                            msgType: "Error",
-                            msgText: "This new can not be in your favorite list"
-                        });
-                    } else {
-                        commit("showPopup", {
-                            msgType: "Error",
-                            msgText: "Some error has happend, please try again later!"
-                        });
-                    }
-                } else {
+          }).catch(function(error){
+                console.log('addToFav error : ',error)
+                if (error.message.startsWith("GraphQL Error: Database")) {
+                    commit("showPopup", {
+                        msgType: "Error",
+                        msgText: "Some error has happend, please try again later!"
+                    });
+                }else if(error.message.startsWith("GraphQL error: Unauthenticated.")){
+                    commit("showPopup", {
+                        msgType: "Error",
+                        msgText: "You should sign in first!"
+                    });
+                }else{
                     commit("showPopup", {
                         msgType: "Error",
                         msgText: "Please check your network 3"
@@ -110,38 +171,52 @@ const actions = {
     },
 
     deleteFromFav({ commit }, newData) {
-        Axios.delete(`/api/new/${newData.id}`)
-            .then(() => {
+        graphqlClient.mutate({
+            mutation: gql`
+            mutation ($id: ID! ) { 
+                deleteFav(id: $id){
+                id
+                userId
+                source
+                author
+                type
+                title
+                description
+                url
+                urlToImage
+                publishedAt
+                errors
+            }
+              
+            }
+            `,
+
+        
+        variables: { id: newData.id}
+        
+          }).then(response => {
+                console.log('deleteFromFav response: ', response.data.deleteFav)
                 commit("deleteFromFav", newData);
                 commit("showSnackBar", {
                     text: "New is deleted successfully from your favorite list",
                     timeout: 3000
                 });
-            })
-            .catch(function(error) {
-                if (error.response) {
-                    if (error.response.status == 401) {
-                        commit("showPopup", {
-                            msgType: "Error",
-                            msgText: "You not allowed to get this page"
-                        });
-                    } else if (error.response.status == 400) {
-                        commit("showPopup", {
-                            msgType: "Error",
-                            msgText:
-                                "This new is not in your favorite list, You can't delete it"
-                        });
-                    } else {
-                        commit("showPopup", {
-                            msgType: "Error",
-                            msgText:
-                                "Some error has happend, please try again later!"
-                        });
-                    }
-                } else {
+          }).catch(function(error){
+                console.log('addToFav error : ',error)
+                if (error.message.startsWith("GraphQL Error: Database")) {
                     commit("showPopup", {
                         msgType: "Error",
-                        msgText: "Please check your network 3"
+                        msgText: "Some error has happend, please try again later!"
+                    });
+                }else if(error.message.startsWith("GraphQL error: Unauthenticated.")){
+                    commit("showPopup", {
+                        msgType: "Error",
+                        msgText: "This new is not in your favorite list, You can't delete it"
+                    });
+                }else{
+                    commit("showPopup", {
+                        msgType: "Error",
+                        msgText: "Please check your network 4"
                     });
                 }
             });
